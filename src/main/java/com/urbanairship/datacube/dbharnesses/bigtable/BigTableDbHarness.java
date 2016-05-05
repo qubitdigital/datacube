@@ -35,7 +35,7 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
 
     private static final Logger log = LoggerFactory.getLogger(BigTableDbHarness.class);
 
-    public final static byte[] QUALIFIER = ArrayUtils.EMPTY_BYTE_ARRAY;
+    public final static byte[] QUALIFIER = "data".getBytes();
 
     private final Connection connection;
     private final Deserializer<T> deserializer;
