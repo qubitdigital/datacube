@@ -1,5 +1,6 @@
 package com.urbanairship.datacube.ops;
 
+import com.urbanairship.datacube.Deserializer;
 import com.urbanairship.datacube.Op;
 import com.urbanairship.datacube.Util;
 
@@ -10,6 +11,7 @@ public class MinLongOp implements Op {
     public MinLongOp(long value) {
         this.value = value;
     }
+    public static final MinLongOpDeserializer DESERIALIZER = new MinLongOpDeserializer();
 
     @Override
     public Op add(Op otherOp) {
@@ -30,4 +32,10 @@ public class MinLongOp implements Op {
         return Util.longToBytes(value);
     }
 
+    public static class MinLongOpDeserializer implements Deserializer<MinLongOp> {
+        @Override
+        public MinLongOp fromBytes(byte[] bytes) {
+            return new MinLongOp(Util.bytesToLong(bytes));
+        }
+    }
 }
