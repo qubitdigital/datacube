@@ -39,50 +39,30 @@
      </plugins>
   </build>
 
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
+  <organization>
+    <name>Qubit</name>
+    <url>http://www.qubit.com</url>
+  </organization>
+
+  <distributionManagement>
+    <repository>
+      <id>nexus</id>
+      <url>http://ci-be.qutics.com/nexus/content/repositories/releases/</url>
+      <uniqueVersion>false</uniqueVersion>
+    </repository>
+    <snapshotRepository>
+      <id>nexus</id>
+      <url>http://ci-be.qutics.com/nexus/content/repositories/snapshots/</url>
+      <uniqueVersion>false</uniqueVersion>
+    </snapshotRepository>
+  </distributionManagement>
 
   <scm>
-    <connection>scm:git:git://@github.com/urbanairship/datacube.git</connection>
-    <developerConnection>scm:git:git@github.com:urbanairship/datacube.git</developerConnection>
-    <url>git@github.com:urbanairship/datacube.git</url>
-    <tag>datacube-1.2.0</tag>
+    <connection>scm:git:git://@github.com/qubitdigital/datacube.git</connection>
+    <developerConnection>scm:git:git@github.com:qubitdigital/datacube.git</developerConnection>
+    <url>https://github.com/qubitdigital/datacube</url>
+    <tag>HEAD</tag>
   </scm>
-
-  <!-- Sonatype requires this element to use their nexus repo -->
-  <developers>
-    <developer>
-      <id>dave</id>
-      <name>Dave Revell</name>
-      <email>dave@urbanairship.com</email>
-      <url>http://urbanairship.com</url>
-      <organization>Urban Airship</organization>
-      <organizationUrl>http://urbanairship.com</organizationUrl>
-      <roles>
-        <role>architect</role>
-        <role>developer</role>
-      </roles>
-      <timezone>-8</timezone>
-    </developer>
-    <developer>
-      <id>dan</id>
-      <name>Dan Colish</name>
-      <email>dcolish@urbnairship.com</email>
-      <url>http://urbanairship.com</url>
-      <organization>Urban Airship</organization>
-      <organizationUrl>http://urbanairship.com</organizationUrl>
-      <roles>
-        <role>maintainer</role>
-        <role>developer</role>
-      </roles>
-      <timezone>-8</timezone>
-    </developer>
-  </developers>
 
   <profiles>
     <!-- Set hbaseVersion if not specified on the command line -->
@@ -138,6 +118,11 @@
               <classifier>hbase${hbaseVersion}-hadoop${hadoopVersion}</classifier>
             </configuration>
           </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>2.5</version>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -161,6 +146,11 @@
             <configuration>
               <classifier>hbase${hbaseVersion}-hadoop${hadoopVersion}</classifier>
             </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>2.5</version>
           </plugin>
         </plugins>
       </build>
