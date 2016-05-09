@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -56,10 +57,24 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
     private final Function<Map<byte[], byte[]>, Void> onFlush;
     private final Set<Batch<T>> batchesInFlight = Sets.newHashSet();
 
+    private final static Function<Map<byte[], byte[]>, Void> NOP = new Function<Map<byte[], byte[]>, Void>() {
+        @Nullable
+        @Override
+        public Void apply(@Nullable Map<byte[], byte[]> map) {
+            return null;
+        }
+    };
+
     public BigTableDbHarness(Connection connection, byte[] uniqueCubeName, byte[] tableName,
-                             byte[] cf, Deserializer<T> deserializer, IdService idService, CommitType commitType,
-                             Function<Map<byte[], byte[]>, Void> onFlush, int numFlushThreads,
-                             int numIoeTries, int numCasTries, String metricsScope) {
+                             byte[] cf, Deserializer<T> deserializer, IdService idService, CommitType commitType) {
+        this(connection, uniqueCubeName, tableName, cf, deserializer, idService, commitType,
+                NOP, 10, 10, 10, "metric");
+    }
+
+     public BigTableDbHarness(Connection connection, byte[] uniqueCubeName, byte[] tableName, byte[] cf,
+                              Deserializer<T> deserializer, IdService idService, CommitType commitType,
+                              Function<Map<byte[], byte[]>, Void> onFlush, int numFlushThreads,
+                              int numIoeTries, int numCasTries, String metricsScope) {
 
         this.connection = connection;
         this.deserializer = deserializer;
