@@ -7,7 +7,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.qubit.datacube.*;
 import com.qubit.datacube.dbharnesses.HBaseDbHarness;
-import com.urbanairship.datacube.*;
 import com.qubit.datacube.dbharnesses.AfterExecute;
 import com.qubit.datacube.dbharnesses.FullQueueException;
 import com.yammer.metrics.Metrics;
