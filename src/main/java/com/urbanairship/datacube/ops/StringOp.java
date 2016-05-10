@@ -29,7 +29,7 @@ public class StringOp implements Op {
 
     @Override
     public int hashCode() {
-        long temp = val.equals("") ? Long.parseLong(val) : 0L;
+        long temp = val.equals("") ? 0L: Long.parseLong(val);
         return (int) (temp ^ (temp >>> 32));
     }
 
