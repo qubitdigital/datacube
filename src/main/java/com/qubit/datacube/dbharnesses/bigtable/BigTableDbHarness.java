@@ -1,5 +1,8 @@
 package com.qubit.datacube.dbharnesses.bigtable;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -9,11 +12,11 @@ import com.qubit.datacube.*;
 import com.qubit.datacube.dbharnesses.HBaseDbHarness;
 import com.qubit.datacube.dbharnesses.AfterExecute;
 import com.qubit.datacube.dbharnesses.FullQueueException;
+import com.readytalk.metrics.StatsDReporter;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 import com.yammer.metrics.core.Gauge;
 import com.yammer.metrics.core.Histogram;
-import com.yammer.metrics.core.Timer;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hbase.client.Connection;
@@ -48,14 +51,23 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
     private final CommitType commitType;
     private final int numIoeTries;
     private final int numCasTries;
-    private final Timer flushSuccessTimer;
-    private final Timer flushFailTimer;
-    private final Timer singleWriteTimer;
+//    private final Timer flushSuccessTimer;
+//    private final Timer flushFailTimer;
+//    private final Timer singleWriteTimer;
     private final Histogram incrementSize;
     private final Histogram casTries;
     private final Counter casRetriesExhausted;
     private final Function<Map<byte[], byte[]>, Void> onFlush;
     private final Set<Batch<T>> batchesInFlight = Sets.newHashSet();
+
+    private static final MetricRegistry metrics = new MetricRegistry();
+    private final Meter putRequests = metrics.meter("put-requests");
+    private final Meter putExceptions = metrics.meter("put-exceptions");
+    private final Meter batchFlushes = metrics.meter("batch-flushes");
+    private final Meter batchFailures = metrics.meter("batch-failures");
+    private final Timer flushSuccessTimer = metrics.timer("flush-success-timer");
+    private final Timer flushFailTimer = metrics.timer("flush-failure-timer");
+    private final Timer singleWriteTimer = metrics.timer("single-write-timer");
 
     private final static Function<Map<byte[], byte[]>, Void> NOP = new Function<Map<byte[], byte[]>, Void>() {
         @Nullable
@@ -75,7 +87,6 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
                               Deserializer<T> deserializer, IdService idService, CommitType commitType,
                               Function<Map<byte[], byte[]>, Void> onFlush, int numFlushThreads,
                               int numIoeTries, int numCasTries, String metricsScope) {
-
         this.connection = connection;
         this.deserializer = deserializer;
         this.uniqueCubeName = uniqueCubeName;
@@ -87,17 +98,21 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
         this.numCasTries = numCasTries;
         this.onFlush = onFlush;
 
-        flushSuccessTimer = Metrics.newTimer(HBaseDbHarness.class, "successfulBatchFlush",
-                                             metricsScope, TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-        flushFailTimer = Metrics.newTimer(HBaseDbHarness.class, "failedBatchFlush",
-                                          metricsScope, TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-        singleWriteTimer = Metrics.newTimer(HBaseDbHarness.class, "singleWrites",
-                                            metricsScope, TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
-        incrementSize = Metrics.newHistogram(HBaseDbHarness.class, "incrementSize",
+        StatsDReporter.forRegistry(metrics)
+                .build("grafana-graphite", 8125)
+                .start(10, TimeUnit.SECONDS);
+
+//        flushSuccessTimer = Metrics.newTimer(BigTableDbHarness.class, "successfulBatchFlush",
+//                                             metricsScope, TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+//        flushFailTimer = Metrics.newTimer(BigTableDbHarness.class, "failedBatchFlush",
+//                                          metricsScope, TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+//        singleWriteTimer = Metrics.newTimer(BigTableDbHarness.class, "singleWrites",
+//                                            metricsScope, TimeUnit.MILLISECONDS, TimeUnit.SECONDS);
+        incrementSize = Metrics.newHistogram(BigTableDbHarness.class, "incrementSize",
                                              metricsScope, true);
-        casTries = Metrics.newHistogram(HBaseDbHarness.class, "casTries",
+        casTries = Metrics.newHistogram(BigTableDbHarness.class, "casTries",
                                         metricsScope, true);
-        casRetriesExhausted = Metrics.newCounter(HBaseDbHarness.class, "casRetriesExhausted",
+        casRetriesExhausted = Metrics.newCounter(BigTableDbHarness.class, "casRetriesExhausted",
                                                  metricsScope);
 
         String cubeName = new String(uniqueCubeName);
@@ -169,12 +184,14 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
          * send them to the database.
          */
         try {
+            putRequests.mark();
             // Submit this batch
             synchronized (batchesInFlight) {
                 batchesInFlight.add(batch);
             }
             return flushExecutor.submit(new FlushWorkerRunnable(batch, afterExecute));
         } catch (RejectedExecutionException ree) {
+            putExceptions.mark();
             throw new FullQueueException();
         }
     }
@@ -284,6 +301,7 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
         long nanoTimeBeforeBatch = System.nanoTime();
 
         try {
+            batchFlushes.mark();
             for (Map.Entry<Address, T> entry : batchMap.entrySet()) {
                 final Address address = entry.getKey();
                 final T op = entry.getValue();
@@ -324,7 +342,8 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
             // There was an IOException while attempting to use the DB. If we were successful with some
             // of the pending writes, they should be removed from the batch so they are not retried later.
             // The operations that didn't get into the DB should be left in the batch to be retried later.
-            log.warn("IOException when flushing batch to HBase", ioe);
+            batchFailures.mark();
+            log.warn("IOException when flushing batch to BigTable", ioe);
             for (Address address : successfulAddresses) {
                 batch.getMap().remove(address);
             }

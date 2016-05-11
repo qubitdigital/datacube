@@ -19,7 +19,7 @@ public class MinLongOp implements Op {
             throw new RuntimeException();
         }
 
-        return new MaxLongOp(Math.max(value, ((MinLongOp) otherOp).value));
+        return new MinLongOp(Math.min(value, ((MinLongOp) otherOp).value));
     }
 
     @Override
