@@ -1,0 +1,82 @@
+/*
+Copyright 2012 Urban Airship and Contributors
+*/
+
+package com.qubit.datacube.ops;
+
+import com.qubit.datacube.Deserializer;
+import com.qubit.datacube.Op;
+import com.qubit.datacube.Util;
+
+/**
+ * Cube oplog mutation type for storing a long counter.
+ */
+public class LongOp implements Op {
+    private final long val;
+    public static final LongOpDeserializer DESERIALIZER = new LongOpDeserializer(); 
+    
+    public LongOp(long val) {
+        this.val = val;
+    }
+
+    @Override
+    public Op add(Op otherOp) {
+        if(!(otherOp instanceof LongOp)) {
+            throw new RuntimeException();
+        }
+        return new LongOp(val + ((LongOp)otherOp).val);
+    }
+    
+    @Override
+    public Op subtract(Op otherOp) {
+        return new LongOp(this.val - ((LongOp)otherOp).val);
+    }
+
+    /**
+     * Eclipse auto-generated
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (int) (val ^ (val >>> 32));
+        return result;
+    }
+
+    /**
+     * Eclipse auto-generated
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        LongOp other = (LongOp) obj;
+        if (val != other.val)
+            return false;
+        return true;
+    }
+
+    @Override
+    public byte[] serialize() {
+        return Util.longToBytes(val);
+    }
+
+    public static class LongOpDeserializer implements Deserializer<LongOp> {
+        @Override
+        public LongOp fromBytes(byte[] bytes) {
+            return new LongOp(Util.bytesToLong(bytes));
+        }
+    }
+    
+    public String toString() {
+        return Long.toString(val);
+    }
+    
+    public long getLong() {
+        return val;
+    }
+}
