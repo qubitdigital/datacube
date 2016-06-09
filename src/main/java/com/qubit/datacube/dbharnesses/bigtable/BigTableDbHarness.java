@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -133,6 +134,10 @@ public class BigTableDbHarness<T extends Op> implements DbHarness<T> {
                 return flushExecutor.getActiveCount();
             }
         });
+    }
+
+    public List<T> scan() throws IOException {
+        return new ArrayList<>();
     }
 
     @Override

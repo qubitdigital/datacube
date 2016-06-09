@@ -22,12 +22,14 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.io.hfile.Compression.Algorithm;
+
+import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.hbase.regionserver.StoreFile.BloomType;
+
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
@@ -76,7 +78,6 @@ public class HBaseSnapshotter implements Runnable {
      * A wrapper around {@link #runWithCheckedExceptions()} that rethrows IOExceptions as
      * RuntimeExceptions.
      */
-    @Override
     public void run() {
         try {
             this.runWithCheckedExceptions();
@@ -189,7 +190,7 @@ public class HBaseSnapshotter implements Runnable {
         HColumnDescriptor cfDesc = new HColumnDescriptor(cf);
         cfDesc.setBloomFilterType(BloomType.NONE);
         cfDesc.setMaxVersions(1);
-        cfDesc.setCompressionType(Algorithm.NONE); // TODO change to snappy in 0.92
+        cfDesc.setCompressionType(Compression.Algorithm.NONE); // TODO change to snappy in 0.92
         HTableDescriptor tableDesc = new HTableDescriptor(tableName);
         tableDesc.addFamily(cfDesc);
         hba.createTable(tableDesc, splitKeys);

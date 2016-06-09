@@ -38,4 +38,9 @@ public class MinLongOp implements Op {
             return new MinLongOp(Util.bytesToLong(bytes));
         }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return ((MinLongOp)obj).value == this.value;
+    }
 }

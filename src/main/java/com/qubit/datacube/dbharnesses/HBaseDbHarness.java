@@ -27,13 +27,17 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -137,6 +141,24 @@ public class HBaseDbHarness<T extends Op> implements DbHarness<T> {
             @Override
             public Integer value() {
                 return flushExecutor.getActiveCount();
+            }
+        });
+    }
+
+    @Override
+    public List<T> scan() throws IOException {
+        Scan scan = new Scan();
+        return WithHTable.scan(pool, tableName, scan, new WithHTable.ScanRunnable<List<T>>() {
+            @Override
+            public List<T> run(ResultScanner rs) {
+                List<T> ret = new ArrayList<>();
+                for(Iterator<Result> it = rs.iterator(); it.hasNext();) {
+                    Result result = it.next();
+                    T deserialized = deserializer.fromBytes(result.value());
+                    ret.add(deserialized);
+                }
+
+                return ret;
             }
         });
     }

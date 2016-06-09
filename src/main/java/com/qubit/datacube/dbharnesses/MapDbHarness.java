@@ -137,6 +137,10 @@ public class MapDbHarness<T extends Op> implements DbHarness<T> {
         return nullFuture;
     }
 
+    public List<T> scan() throws IOException {
+        return null;
+    }
+
     @Override
     public Optional<T> get(Address address) throws IOException, InterruptedException {
         Optional<byte[]> bytes = getRaw(address);

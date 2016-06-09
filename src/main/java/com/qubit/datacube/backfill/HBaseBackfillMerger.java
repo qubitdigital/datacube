@@ -19,6 +19,8 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.mapreduce.Job;
@@ -101,7 +103,7 @@ public class HBaseBackfillMerger implements Runnable {
                         cubeNameKeyPrefix, Bytes.add(cubeNameKeyPrefix, fiftyBytesFF));
                 return hbaseSnapshotter.runWithCheckedExceptions();
             }  else {
-          
+
                 Job job = new Job(conf);
                 backfilledHTable = new HTable(conf, backfilledTableName);
                 
@@ -115,7 +117,8 @@ public class HBaseBackfillMerger implements Runnable {
                 if(log.isDebugEnabled()) {
                     log.debug("Scans: " + scans);
                 }
-                CollectionInputFormat.setCollection(job, Scan.class, scans);
+
+                CollectionInputFormat.setCollection(job, scans);
                 
                 // We cannot allow map tasks to retry, or we could increment the same key multiple times.
                 job.getConfiguration().set("mapred.map.max.attempts", "1");

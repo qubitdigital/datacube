@@ -36,6 +36,8 @@ public interface DbHarness<T extends Op> {
      */
     Future<?> runBatchAsync(Batch<T> batch, AfterExecute<T> afterExecute) throws FullQueueException;
 
+    List<T> scan() throws IOException;
+
     /**
      * @return absent if the bucket doesn't exist, or the bucket if it does.
      * @throws InterruptedException 

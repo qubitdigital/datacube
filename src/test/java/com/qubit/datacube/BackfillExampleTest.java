@@ -67,12 +67,13 @@ public class BackfillExampleTest extends EmbeddedClusterTestAbstract {
     }
     
     private static class CubeWrapper {
-        private final DataCubeIo<LongOp> dataCubeIo;
+        final DataCubeIo<LongOp> dataCubeIo;
+        final DbHarness<LongOp> hbaseDbHarness;
         
         public CubeWrapper(byte[] table, byte[] cf) throws Exception {
             HTablePool pool = new HTablePool(getTestUtil().getConfiguration(), Integer.MAX_VALUE);
-            DbHarness<LongOp> hbaseDbHarness = new HBaseDbHarness<LongOp>(pool,
-                    ArrayUtils.EMPTY_BYTE_ARRAY, table, cf, LongOp.DESERIALIZER, idService, 
+            hbaseDbHarness = new HBaseDbHarness<LongOp>(pool,
+                    ArrayUtils.EMPTY_BYTE_ARRAY, table, cf, LongOp.DESERIALIZER, idService,
                     DbHarness.CommitType.INCREMENT);
             dataCubeIo = new DataCubeIo<LongOp>(dataCube, hbaseDbHarness, 1, Long.MAX_VALUE,
                     SyncLevel.FULL_SYNC);
@@ -127,7 +128,8 @@ public class BackfillExampleTest extends EmbeddedClusterTestAbstract {
                 LongOp.LongOpDeserializer.class);
         boolean success = backfill.runWithCheckedExceptions();
         Assert.assertTrue(success);
-        
+
+        Assert.assertEquals(0L, cubeWrapper.hbaseDbHarness.scan());
         Assert.assertEquals(0L, cubeWrapper.getHourCount(midnight.plusHours(0)));
         Assert.assertEquals(1L, cubeWrapper.getHourCount(midnight.plusHours(1)));
         Assert.assertEquals(2L, cubeWrapper.getHourCount(midnight.plusHours(2)));

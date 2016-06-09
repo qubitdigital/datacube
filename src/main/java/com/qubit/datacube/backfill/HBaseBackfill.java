@@ -15,8 +15,9 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.io.hfile.Compression.Algorithm;
-import org.apache.hadoop.hbase.regionserver.StoreFile.BloomType;
+
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +97,7 @@ public class HBaseBackfill implements Runnable {
             
             HColumnDescriptor cfDesc = new HColumnDescriptor(cf);
             cfDesc.setBloomFilterType(BloomType.NONE);
-            cfDesc.setCompressionType(Algorithm.NONE); // TODO switch to snappy in 0.92
+            cfDesc.setCompressionType(Compression.Algorithm.NONE); // TODO switch to snappy in 0.92
             cfDesc.setMaxVersions(1);
             HTableDescriptor tableDesc = new HTableDescriptor(backfillTableName);
             tableDesc.addFamily(cfDesc);
@@ -107,6 +108,9 @@ public class HBaseBackfill implements Runnable {
             HBaseBackfillMerger backfillMerger = new HBaseBackfillMerger(conf, 
                     ArrayUtils.EMPTY_BYTE_ARRAY, liveDataTableName, snapshotTableName, 
                     backfillTableName, cf, opDeserializerCls);
+
+            backfillMerger.run();
+            /*
             try {
                 if(!backfillMerger.runWithCheckedExceptions()) {
                     log.error("Backfill merger failed. Returning false.");
@@ -114,7 +118,7 @@ public class HBaseBackfill implements Runnable {
             } catch (InterruptedException e) {
                 log.error("Backfill merger was interrupted, returning false");
                 return false;
-            }
+            }*/
             
             log.debug("Backfill complete");
             return true;
